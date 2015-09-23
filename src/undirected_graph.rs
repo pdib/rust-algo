@@ -17,8 +17,8 @@ impl<'a, T: Clone> DfsIterator<'a, T> {
             stack: vec![start],
             visited: Vec::with_capacity(size)
         };
-        for i in 0..size{
-            it.visited[i] = i == start;
+        for i in 0..size {
+            it.visited.push(i == start);
         }
         it
     }
@@ -33,6 +33,7 @@ impl<'a, T: Clone> Iterator for DfsIterator<'a, T> {
         } else {
             let mut next_node = self.stack[self.stack.len() - 1];
             let mut found = true;
+            
             while found {
                 found = false;
                 for v in self.graph.from(next_node) {
@@ -54,6 +55,22 @@ impl<'a, T: Clone> Iterator for DfsIterator<'a, T> {
     }
 }
 
+impl<T> UndirectedGraph<T> {
+    pub fn size(&self) -> usize {
+        self.data.len()
+    }
+
+    pub fn add_edge(&mut self, u: usize, v: usize) {
+        self.edges[u].push(v);
+        self.edges[v].push(u);
+    }
+    
+    pub fn from(&self, u: usize) -> &Vec<usize> {
+        &self.edges[u]
+    }
+}
+
+
 impl<T: Clone> UndirectedGraph<T> {
     pub fn new(size: usize) -> UndirectedGraph<T> {
         let mut s = UndirectedGraph {
@@ -68,24 +85,18 @@ impl<T: Clone> UndirectedGraph<T> {
     }
 
     pub fn set_data(&mut self, u: usize, t: T) {
-        self.data[u] = Some(t);
+        if u < self.data.len() {
+            self.data[u] = Some(t);
+        }
     }
 
     pub fn get_data(&mut self, u: usize) -> Option<&T> {
-        self.data[u].as_ref()
-    }
-    
-    pub fn add_edge(&mut self, u: usize, v: usize) {
-        self.edges[u].push(v);
-        self.edges[v].push(u);
-    }
-    
-    pub fn from(&self, u: usize) -> &Vec<usize> {
-        &self.edges[u]
-    }
+        if u < self.data.len() {
+            self.data[u].as_ref()
+        } else {
+            None
+        }
 
-    pub fn size(&self) -> usize {
-        self.data.len()
     }
 
     pub fn dfs(&mut self, start: usize) -> DfsIterator<T> {
@@ -108,6 +119,18 @@ mod test {
     }
 
     #[test]
+    fn size_non_zero() {
+        let s = UndirectedGraph::<i32>::new(10);
+        assert_eq!(s.size(), 10);
+    }
+
+    #[test]
+    fn size_zero() {
+        let s = UndirectedGraph::<i32>::new(0);
+        assert_eq!(s.size(), 0);
+    }
+    
+    #[test]
     fn with_data () {
         let mut s = UndirectedGraph::<i32>::new(2);
         s.set_data(0, 1337);
@@ -115,9 +138,23 @@ mod test {
         assert!(s.get_data(1).is_none());
     }
 
+
     #[test]
     fn depth_first_search () {
-        
+        let mut s = UndirectedGraph::<i32>::new(5);
+        s.set_data(0, 0);
+        s.set_data(1, 1);
+        s.set_data(2, 2);
+        s.set_data(3, 3);
+        s.set_data(4, 4);
+
+        s.add_edge(0, 1);
+        s.add_edge(0, 2);
+
+        s.add_edge(1, 3);
+        s.add_edge(3, 4);
+
+        println!("{:?}", s.dfs(2).collect::<Vec<i32>>());
     }
 }
 
