@@ -1,0 +1,4 @@
+[package]
+name = "algo"
+version = "0.1.0"
+authors = ["Paul Dib <paul.dib@orange.fr>"]
