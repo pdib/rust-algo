@@ -4,13 +4,13 @@ pub struct UndirectedGraph<T> {
 }
 
 pub struct DfsIterator<'a, T: 'a> {
-    graph: &'a mut UndirectedGraph<T>,
+    graph: &'a UndirectedGraph<T>,
     stack: Vec<usize>,
     visited: Vec<bool>
 }
 
 impl<'a, T: Clone> DfsIterator<'a, T> {
-    pub fn new(graph: &'a mut UndirectedGraph<T>, start: usize) -> DfsIterator<'a, T> {
+    pub fn new(graph: &'a UndirectedGraph<T>, start: usize) -> DfsIterator<'a, T> {
         let size = graph.size();
         let mut it = DfsIterator {
             graph: graph,
@@ -90,7 +90,7 @@ impl<T: Clone> UndirectedGraph<T> {
         }
     }
 
-    pub fn get_data(&mut self, u: usize) -> Option<&T> {
+    pub fn get_data(&self, u: usize) -> Option<&T> {
         if u < self.data.len() {
             self.data[u].as_ref()
         } else {
@@ -154,7 +154,9 @@ mod test {
         s.add_edge(1, 3);
         s.add_edge(3, 4);
 
-        println!("{:?}", s.dfs(2).collect::<Vec<i32>>());
+
+        assert_eq!(s.dfs(2).collect::<Vec<i32>>(), vec![4, 3, 1, 0, 2]);
+        assert_eq!(s.dfs(1).collect::<Vec<i32>>(), vec![2, 0, 4, 3, 1]);
     }
 }
 
