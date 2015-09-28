@@ -1,47 +1,63 @@
-struct BinaryHeap {
-    array: Vec<i32>
+pub struct BinaryHeap<T> {
+    array: Vec<T>
 }
 
-impl BinaryHeap {
-    pub fn new() -> BinaryHeap {
-        BinaryHeap {
-            array: Vec::<i32>::new()
+pub fn heapsort<T>(v: &mut Vec<T>) where T: Ord {
+    let mut heap = BinaryHeap::<T>::new();
+    while !v.is_empty() {
+        heap.insert(v.pop().unwrap());
+    }
+    while !heap.is_empty() {
+        v.push(heap.remove_min());
+    }
+}
+
+impl<T: Ord> BinaryHeap<T> {
+    pub fn new() -> BinaryHeap<T> {
+        BinaryHeap::<T> {
+            array: Vec::<T>::new()
         }
     }
 
-    pub fn get_min(&self) -> i32 {
+    pub fn is_empty(&self) -> bool {
+        self.array.is_empty()
+    }
+    
+    pub fn get_min(&self) -> &T {
         if self.array.len() == 0 {
             panic!("get_min called on empty heap");
         }
-        self.array[0]
+        &self.array[0]
     }
 
-    pub fn insert(&mut self, x: i32) {
+    pub fn insert(&mut self, x: T) {
         self.array.push(x);
         let idx = self.array.len() - 1;
         self.bubble_up(idx);
     }
 
-    pub fn remove_min(&mut self) {
+    pub fn remove_min(&mut self) -> T {
         if self.array.len() == 0 {
             panic!("Remove called on empty heap");
         }
-        self.array.swap_remove(0); // replace first element with last
+        let res = self.array.swap_remove(0); // replace first element with last
         self.bubble_down(0);
+        res
     }
 
     fn bubble_up (&mut self, index: usize) {
         if index <= 0 {
             return;
         }
-        if self.array[index] < self.array[BinaryHeap::get_parent(index)] {
-            self.array.swap(index, BinaryHeap::get_parent(index));
-            self.bubble_up(BinaryHeap::get_parent(index));
+        let parent = BinaryHeap::<T>::get_parent(index);
+        if self.array[index] < self.array[parent] {
+            self.array.swap(index, parent);
+            self.bubble_up(parent);
         }
     }
 
     fn bubble_down (&mut self, index: usize) {
-        let fc = BinaryHeap::get_first_child(index);
+        let fc = BinaryHeap::<T>::get_first_child(index);
         if fc >= self.array.len() {
             return;
         }
@@ -69,6 +85,7 @@ impl BinaryHeap {
 #[cfg(test)]
 mod test {
     use super::BinaryHeap;
+    use super::heapsort;   
 
     #[test]
     fn insert () {
@@ -89,14 +106,14 @@ mod test {
         h.insert(-6);
         h.insert(3);
 
-        assert_eq!(h.array[0], h.get_min());
-        assert_eq!(h.get_min(), -6);
+        assert_eq!(h.array[0], *h.get_min());
+        assert_eq!(*h.get_min(), -6);
     }
 
     #[test]
     #[should_panic(expected = "empty")]
     fn get_min_empty_heap () {
-        let mut h = BinaryHeap::new();
+        let h = BinaryHeap::<i32>::new();
         h.get_min();
     }
 
@@ -134,8 +151,25 @@ mod test {
     #[test]
     #[should_panic(expected = "empty")]
     fn remove_on_empty () {
-        let mut h = BinaryHeap::new();
+        let mut h = BinaryHeap::<i32>::new();
         h.remove_min();
+    }
+
+    #[test]
+    fn is_empty () {
+        let mut h = BinaryHeap::<i32>::new();
+        assert!(h.is_empty());
+        h.insert(6);
+        assert!(!h.is_empty());
+        h.remove_min();
+        assert!(h.is_empty());
+    }
+
+    #[test]
+    fn heapsort_vector () {
+        let mut v = vec![3,4,-1,0,192,20];
+        heapsort(&mut v);
+        assert_eq!(v, [-1, 0, 3, 4, 20, 192]);
     }
 }
 
