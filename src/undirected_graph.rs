@@ -9,6 +9,50 @@ pub struct DfsIterator<'a, T: 'a> {
     visited: Vec<bool>
 }
 
+pub struct BfsIterator<'a, T: 'a> {
+    graph: &'a UndirectedGraph<T>,
+    queue: Vec<usize>,
+    visited: Vec<bool>
+}
+
+impl<'a, T: Clone> BfsIterator<'a, T> {
+    pub fn new(graph: &'a UndirectedGraph<T>, start: usize) -> BfsIterator<'a, T> {
+        let size = graph.size();
+        let mut it = BfsIterator {
+            graph: graph,
+            queue: vec![start],
+            visited: Vec::<bool>::with_capacity(size)
+        };
+        for i in 0..size {
+            it.visited.push(i == start);
+        }
+        it
+    }
+}
+
+impl<'a, T: Clone> Iterator for BfsIterator<'a, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<T> {
+        if self.queue.is_empty() {
+            None
+        } else {
+            let u = self.queue.remove(0);
+            for v in self.graph.from(u) {
+                if !self.visited[*v] {
+                    self.visited[*v] = true;
+                    self.queue.push(*v);
+                }
+            }
+            match self.graph.get_data(u) {
+                Some(t) => Some(t.clone()),
+                _ => None
+            }
+        }
+    }
+}
+
+
 impl<'a, T: Clone> DfsIterator<'a, T> {
     pub fn new(graph: &'a UndirectedGraph<T>, start: usize) -> DfsIterator<'a, T> {
         let size = graph.size();
@@ -102,6 +146,10 @@ impl<T: Clone> UndirectedGraph<T> {
     pub fn dfs(&mut self, start: usize) -> DfsIterator<T> {
         DfsIterator::new(self, start)
     }
+
+    pub fn bfs(&mut self, start: usize) -> BfsIterator<T> {
+        BfsIterator::new(self, start)
+    }
 }
 
 #[cfg(test)]
@@ -157,6 +205,27 @@ mod test {
 
         assert_eq!(s.dfs(2).collect::<Vec<i32>>(), vec![4, 3, 1, 0, 2]);
         assert_eq!(s.dfs(1).collect::<Vec<i32>>(), vec![2, 0, 4, 3, 1]);
+    }
+
+    
+    #[test]
+    fn breadth_first_search () {
+        let mut s = UndirectedGraph::<i32>::new(5);
+        s.set_data(0, 0);
+        s.set_data(1, 1);
+        s.set_data(2, 2);
+        s.set_data(3, 3);
+        s.set_data(4, 4);
+
+        s.add_edge(0, 1);
+        s.add_edge(0, 2);
+
+        s.add_edge(1, 3);
+        s.add_edge(3, 4);
+
+
+        assert_eq!(s.bfs(2).collect::<Vec<i32>>(), vec![2, 0, 1, 3, 4]);
+        assert_eq!(s.bfs(1).collect::<Vec<i32>>(), vec![1, 0, 3, 2, 4]);
     }
 }
 
